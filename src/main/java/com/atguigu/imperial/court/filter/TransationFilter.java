@@ -28,12 +28,21 @@ public class TransationFilter implements Filter {
     @Override
     public void destroy() {}
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletresponse, FilterChain filterChain) throws IOException, ServletException {
         // 前置操作：排除静态资源
         //
-     HttpServletRequest httpServletRequest= (HttpServletRequest) request;
-     String servletPath= ((HttpServletRequest) request).getServletPath();
+     HttpServletRequest httpServletRequest= (HttpServletRequest) servletRequest;
+     String servletPath= ((HttpServletRequest) servletRequest).getServletPath();
+         if (servletPath.contains(".")){
+             String extName=servletPath.substring(servletPath.lastIndexOf("."));
 
+             //  // 如果检测到当前请求确实是静态资源，则直接放行，不做事务操作
+             if(staticResourceExtNameSet.contains(extName)){
+                 filterChain.doFilter(servletRequest,servletresponse);
+                 // 当前方法立即返回
+                 return ;
+             }
+         }
 
 
 
@@ -41,7 +50,7 @@ public class TransationFilter implements Filter {
         Connection connection=null;
         try{
             connection= JDBCUtils.getConnection();
-            filterChain.doFilter(request,response);
+            filterChain.doFilter(servletRequest,servletresponse);
 
             connection.commit();
         }catch (Exception e){
